@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codex Systems - Agile Board</title>
+    
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; display: flex; height: 100vh; }
+        
+        /* BARRA LATERAL */
+        .sidebar { width: 250px; background-color: #1e293b; color: white; padding: 20px; }
+        .sidebar .logo { font-size: 24px; margin-bottom: 30px; text-align: center; }
+        .sidebar li { padding: 12px; margin-bottom: 8px; list-style: none; cursor: pointer; border-radius: 4px; }
+        .sidebar li.active { background-color: #0056b3; font-weight: bold; }
+
+        /* CONTEÚDO PRINCIPAL */
+        .content { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        header h1 { color: #333; margin: 0 0 5px 0; }
+        header p { color: #666; margin-bottom: 20px; }
+        
+        .painel-sprint { background-color: #eef5fa; padding: 15px; border-radius: 8px; border: 1px solid #cce0f0; margin-bottom: 20px; font-weight: bold; color: #0056b3; }
+
+        /* FORMULÁRIO */
+        .form-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 10px; }
+        .form-group { flex: 1; }
+        label { display: block; margin-top: 10px; font-weight: bold; color: #555; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 12px; margin-top: 15px; background-color: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #004494; }
+
+        /* QUADRO KANBAN (SCRUM) */
+        .kanban-board { display: flex; gap: 20px; }
+        .column { flex: 1; background: #e2e8f0; border-radius: 8px; padding: 15px; min-height: 300px; display: flex; flex-direction: column; }
+        .column h3 { text-align: center; color: #333; margin-top: 0; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px; pointer-events: none; }
+        
+        /* CARTÃO DE TAREFA (Agora com cursor de arrastar) */
+        .card { background: white; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 4px solid #0056b3; cursor: grab; }
+        .card:active { cursor: grabbing; opacity: 0.8; }
+        .card h4 { margin: 0 0 10px 0; color: #1e293b; pointer-events: none; }
+        .card p { margin: 5px 0; font-size: 13px; color: #475569; pointer-events: none; }
+        .card .badge { display: inline-block; background: #f1f5f9; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #64748b; margin-top: 5px; pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <h2 class="logo">🚀 Codex Agile</h2>
+      <ul>
+        <li class="active">Quadro Scrum</li>
+        <li>Métricas</li>
+        <li>Equipe</li>
+      </ul>
+    </div>
+
+    <main class="content">
+      <header>
+        <h1>Gestão de Projetos e Sprints</h1>
+        <p>Acompanhamento de tarefas e melhoria de comunicação entre as áreas.</p>
+      </header>
+
+      <div class="painel-sprint">
+        Total de Pontos de Esforço da Sprint: <span id="total-pontos">0</span>
+      </div>
+
+      <section class="form-section">
+        <form id="form-tarefa">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Título da Tarefa:</label>
+              <input type="text" id="titulo" placeholder="Ex: Criar API de Login" required>
+            </div>
+            <div class="form-group">
+              <label>Responsável:</label>
+              <select id="responsavel" required>
+                <option value="">Selecione...</option>
+                <option value="João (Dev)">João (Dev)</option>
+                <option value="Maria (Testes)">Maria (Testes)</option>
+                <option value="Carlos (Negócios)">Carlos (Negócios)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Descrição do Projeto/Tarefa:</label>
+              <textarea id="descricao" rows="2" placeholder="Descreva os detalhes..." required></textarea>
+            </div>
+            <div class="form-group" style="flex: 0.5;">
+              <label>Pontos de Esforço:</label>
+              <input type="number" id="pontos" placeholder="Ex: 5" required>
+            </div>
+            <div class="form-group" style="flex: 0.5;">
+              <label>Etapa Inicial:</label>
+              <select id="status" required>
+                <option value="A Fazer">A Fazer</option>
+                <option value="Em Andamento">Em Andamento</option>
+                <option value="Concluido">Concluído</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit">Adicionar ao Quadro Scrum</button>
+        </form>
+      </section>
+
+      <section class="kanban-board">
+        <div class="column" id="col-a-fazer" ondrop="drop(event)" ondragover="allowDrop(event)">
+          <h3>📋 A Fazer</h3>
+        </div>
+        <div class="column" id="col-em-andamento" ondrop="drop(event)" ondragover="allowDrop(event)">
+          <h3>⚙️ Em Andamento</h3>
+        </div>
+        <div class="column" id="col-concluido" ondrop="drop(event)" ondragover="allowDrop(event)">
+          <h3>✅ Concluído</h3>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      let totalEsforco = 0;
+      let contadorCartoes = 0; // Necessário para dar um ID único a cada cartão arrastável
+
+      // ==========================================
+      // FUNÇÕES DE ARRASTAR E SOLTAR (DRAG AND DROP)
+      // ==========================================
+      function allowDrop(ev) {
+          ev.preventDefault(); // Permite que o elemento seja solto nesta área
+      }
+
+      function drag(ev) {
+          ev.dataTransfer.setData("text", ev.target.id); // Pega o ID do cartão que está sendo arrastado
+      }
+
+      function drop(ev) {
+          ev.preventDefault();
+          const data = ev.dataTransfer.getData("text");
+          const cartaoArrastado = document.getElementById(data);
+          
+          // Garante que o cartão seja solto na coluna, e não dentro de outro cartão
+          if (ev.target.classList.contains('column')) {
+              ev.target.appendChild(cartaoArrastado);
+          } else {
+              ev.currentTarget.appendChild(cartaoArrastado);
+          }
+      }
+
+      // ==========================================
+      // MÓDULO 1: MATEMÁTICA (Bug Unitário)
+      // ==========================================
+      function calcularPontosDaSprint(novosPontos) {
+          // 🐞 BUG 1 (Unitário): Erro de concatenação ao invés de soma
+          totalEsforco += novosPontos; 
+          document.getElementById('total-pontos').innerText = totalEsforco;
+      }
+
+      // ==========================================
+      // MÓDULO 2: INTERFACE DO CARTÃO
+      // ==========================================
+      function criarCartaoHTML(titulo, responsavel, descricao, pontos) {
+          contadorCartoes++;
+          const idCartao = "cartao-" + contadorCartoes;
+          
+          // O cartão agora tem id, draggable="true" e evento ondragstart
+          return `
+            <div class="card" id="${idCartao}" draggable="true" ondragstart="drag(event)">
+              <h4>${titulo}</h4>
+              <p><strong>Resp:</strong> ${responsavel}</p>
+              <p>${descricao}</p>
+              <span class="badge">Esforço: ${pontos} pts</span>
+            </div>
+          `;
+      }
+
+      // ==========================================
+      // MÓDULO 3: CONTROLE PRINCIPAL
+      // ==========================================
+      document.getElementById("form-tarefa").addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const titulo = document.getElementById("titulo").value;
+          const responsavel = document.getElementById("responsavel").value;
+          const descricao = document.getElementById("descricao").value;
+          const pontos = document.getElementById("pontos").value; // Vem como string
+          const status = document.getElementById("status").value;
+
+          // 🐞 BUG 3 (Aceitação): Aceita pontos negativos sem validação
+          
+          // Atualiza a matemática
+          calcularPontosDaSprint(pontos);
+
+          // 🐞 BUG 2 (Integração): Parâmetros invertidos (responsável e descrição)
+          const cartaoHTML = criarCartaoHTML(titulo, descricao, responsavel, pontos);
+
+          // Adiciona o elemento na coluna inicial escolhida
+          const containerTemp = document.createElement('div');
+          containerTemp.innerHTML = cartaoHTML;
+          const novoCartao = containerTemp.firstElementChild;
+
+          if (status === "A Fazer") {
+              document.getElementById("col-a-fazer").appendChild(novoCartao);
+          } else if (status === "Em Andamento") {
+              document.getElementById("col-em-andamento").appendChild(novoCartao);
+          } else {
+              document.getElementById("col-concluido").appendChild(novoCartao);
+          }
+
+          document.getElementById("form-tarefa").reset();
+      });
+    </script>
+  </body>
+</html>
